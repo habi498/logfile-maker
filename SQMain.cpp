@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <string>
 #include <fstream>
+#include <thread>
 using namespace std;
 
 PluginFuncs* VCMP;
@@ -52,8 +53,73 @@ uint8_t OnPluginCommand(uint32_t type, const char* text) {
 	}
 	return 1;
 }
+short c = 0; short d = 0;
+void foo()
+{
+	Sleep(5000);
+	HANDLE hcons = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO info;
+loop:
+	GetConsoleScreenBufferInfo(
+		hcons,
+		&info
+	);
+	short a = info.dwCursorPosition.X ;
+	short b = info.dwCursorPosition.Y;
+	if(a==c && b==d)
+	{
+		Sleep(1000);
+		goto loop;
+	}
+	short length = info.dwSize.X;
+	COORD start;
+	start.X = 0; start.Y = 0;
+	CHAR_INFO* buffer = (CHAR_INFO*)
+		malloc(info.dwSize.X * info.dwSize.Y);
+	SMALL_RECT rect;
+	rect.Top = d;
+	rect.Left = 0;
+	rect.Bottom = b;
+	rect.Right = length-1;
+	bool read = ReadConsoleOutput(
+		hcons,
+		buffer,
+		info.dwSize,
+		start,
+		&rect);
+	if (read != 0)
+	{
+		std::fstream myfile;
+		myfile.open("logfile.txt",std::fstream::out|std::fstream::app);
+		int total = (b - d) * length + a ;
+		//printf("a,b,c,d is %d,%d,%d,%d\n", a, b, c, d);
+		for (int i = c; i < total; i++)
+		{
+			myfile << buffer[i].Char.AsciiChar;
+			if ((i + 1) %length  == 0)
+			{
+				myfile << std::endl;
+			}
+		}
+		myfile.close();
+		free(buffer);
+		c = a; d = b;
+	}
+	else {
+		printf("failure read\n");
+		printf("%d", GetLastError());
+	}
+loopend:
+	Sleep(2000);
+	goto loop;
+}
 
-
+uint8_t OnServerInitialise()
+{
+	thread t1(&foo);
+	t1.detach();
+	return 1;
+}
 extern "C" unsigned int VcmpPluginInit(PluginFuncs* pluginFuncs, PluginCallbacks* pluginCalls, PluginInfo* pluginInfo) {
     VCMP = pluginFuncs;
 
@@ -63,6 +129,7 @@ extern "C" unsigned int VcmpPluginInit(PluginFuncs* pluginFuncs, PluginCallbacks
 	pluginInfo->apiMinorVersion = PLUGIN_API_MINOR;
 	strcpy(pluginInfo->name, "squirrel_logfile");
 	pluginCalls->OnPluginCommand = OnPluginCommand;
+	pluginCalls->OnServerInitialise = OnServerInitialise;
 	return 1;
 }
 
