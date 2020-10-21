@@ -11,16 +11,20 @@ _SQUIRRELDEF(SQ_export) {
     if (iArgCount == 1) {
         HANDLE hcons = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO info;
+        
         GetConsoleScreenBufferInfo(
             hcons,
             &info
         );
-        int y = info.dwCursorPosition.Y + 1;
-        int x = info.dwSize.X;
+        size_t y = info.dwCursorPosition.Y + 1;
+        size_t x = info.dwSize.X;
+        //printf("y is %lu and x is %lu\n", y, x);
         COORD start;
         start.X = 0; start.Y = 0;
         CHAR_INFO* buffer = (CHAR_INFO*)
-            malloc(info.dwSize.X * info.dwSize.Y);
+            malloc(sizeof(CHAR_INFO)*(size_t)info.dwSize.X * info.dwSize.Y);
+        //if (buffer == NULL)printf("malloc failed\n");
+        //printf("size is %lu\n", sizeof(CHAR_INFO) * (size_t)info.dwSize.X * info.dwSize.Y);
         SMALL_RECT rect;
         rect.Top = 0;
         rect.Left = 0;

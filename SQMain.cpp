@@ -53,7 +53,8 @@ uint8_t OnPluginCommand(uint32_t type, const char* text) {
 	}
 	return 1;
 }
-short c = 0; short d = 0;
+size_t c = 0; 
+size_t d = 0;
 void foo()
 {
 	Sleep(5000);
@@ -64,18 +65,18 @@ loop:
 		hcons,
 		&info
 	);
-	short a = info.dwCursorPosition.X ;
-	short b = info.dwCursorPosition.Y;
+	size_t a = info.dwCursorPosition.X ;
+	size_t b = info.dwCursorPosition.Y;
 	if(a==c && b==d)
 	{
 		Sleep(1000);
 		goto loop;
 	}
-	short length = info.dwSize.X;
+	size_t length = info.dwSize.X;
 	COORD start;
 	start.X = 0; start.Y = 0;
 	CHAR_INFO* buffer = (CHAR_INFO*)
-		malloc(info.dwSize.X * info.dwSize.Y);
+		malloc(sizeof(CHAR_INFO) * (size_t)info.dwSize.X * info.dwSize.Y);
 	SMALL_RECT rect;
 	rect.Top = d;
 	rect.Left = 0;
@@ -91,9 +92,9 @@ loop:
 	{
 		std::fstream myfile;
 		myfile.open("logfile.txt",std::fstream::out|std::fstream::app);
-		int total = (b - d) * length + a ;
+		size_t total = (b - d) * length + a ;
 		//printf("a,b,c,d is %d,%d,%d,%d\n", a, b, c, d);
-		for (int i = c; i < total; i++)
+		for (size_t i = c; i < total; i++)
 		{
 			myfile << buffer[i].Char.AsciiChar;
 			if ((i + 1) %length  == 0)
